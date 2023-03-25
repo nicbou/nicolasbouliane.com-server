@@ -1,0 +1,21 @@
+version: '3.2'
+
+# Production docker file. Adds ursus_builder to rebuild the website when the
+# git repo has new commits
+
+services:
+  ursus_builder:
+    build:
+      context: "./ursus_builder"
+    environment:
+      - "GIT_REPO_URL"
+      - "SITE_URL"
+    volumes:
+      - "ursus_files:/var/ursus/site"
+      - "static_site:/var/ursus/output"
+  proxy:
+    volumes:
+      - "static_site:/var/www/html"
+volumes:
+  ursus_files:
+  static_site:
