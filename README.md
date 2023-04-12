@@ -1,0 +1,1 @@
+This is the server that serves [my personal website](https://github.com/nicbou/nicolasbouliane.com). It's a reference implementation of a server that serves an [Ursus](https://github.com/nicbou/ursus) website.
