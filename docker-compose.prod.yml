@@ -4,9 +4,17 @@ version: '3.2'
 # git repo has new commits
 
 services:
+  # The search image is not needed to run the website. It's specific to nicolasbouliane.com
+  search:
+    build: ./search
+    environment:
+      - "TIMELINE_CLIENT_ID"
+      - "TIMELINE_CLIENT_SECRET"
   ursus_builder:
     build:
       context: "./ursus_builder"
+    depends_on:
+      - search
     environment:
       - "GIT_REPO_URL"
       - "SITE_URL"
