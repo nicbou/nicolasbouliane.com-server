@@ -27,6 +27,8 @@ then
     build_site;
 fi
 
+cd "$SITE_PATH"
+
 # Initial build on start
 site_git pull;
 build_site;
