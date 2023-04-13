@@ -5,6 +5,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && git config --global pull.rebase false
 
-COPY ./watch-for-updates.sh /watch-for-updates.sh
+COPY ./watch-for-updates.py /watch-for-updates.py
 
-CMD /watch-for-updates.sh
+CMD /watch-for-updates.py
