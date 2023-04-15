@@ -4,10 +4,10 @@
 from pathlib import Path
 from subprocess import run, check_output, STDOUT
 from time import sleep
+from urllib import request
 import json
 import logging
 import os
-import urllib
 import sys
 
 
@@ -15,21 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 def purge_cloudflare_cache(cloudflare_zone: str, cloudflare_api_key: str):
+    logger.info("Purging Cloudflare cache")
     headers = {
         'Authorization': f'Bearer {cloudflare_api_key}',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     }
     data = json.dumps({'purge_everything': True}).encode('utf8')
-    request = urllib.request.Request(
+    req = request.Request(
         f"https://api.cloudflare.com/client/v4/zones/{cloudflare_zone}/purge_cache",
         data=data, headers=headers
     )
-    return urllib.request.urlopen(request)
+    return request.urlopen(req)
 
 
-def build_site(site_path: Path):
+def build_site(site_path: Path, cloudflare_zone: str, cloudflare_api_key: str):
     run(['ursus', '-c', site_path / 'ursus_config.py'], check=True, stdout=sys.stdout, stderr=STDOUT)
+    if cloudflare_zone and cloudflare_api_key:
+        purge_cloudflare_cache(cloudflare_zone, cloudflare_api_key)
 
 
 def install_ursus(ursus_path: Path):
@@ -83,7 +86,7 @@ if __name__ == '__main__':
         run(['git', 'clone', site_repo_url, site_path], check=True)
 
     pull(site_path)
-    build_site(site_path)
+    build_site(site_path, cloudflare_zone, cloudflare_api_key)
 
     while True:
         rebuild_needed = False
@@ -99,8 +102,7 @@ if __name__ == '__main__':
             rebuild_needed = True
 
         if rebuild_needed:
-            build_site(site_path)
-            if cloudflare_zone and cloudflare_api_key:
-                purge_cloudflare_cache(cloudflare_zone, cloudflare_api_key)
+            build_site(site_path, cloudflare_zone, cloudflare_api_key)
 
         sleep(60)
+
