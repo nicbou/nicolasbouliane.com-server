@@ -20,7 +20,7 @@ services:
       - "SITE_URL"
     volumes:
       - "ursus_files:/var/ursus/site"
-      - "static_site:/var/ursus/site/output"
+      - "static_site:/var/ursus/output"
   proxy:
     volumes:
       - "static_site:/var/www/html"
