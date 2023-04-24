@@ -76,6 +76,7 @@ if __name__ == '__main__':
         ursus_path.mkdir(parents=True, exist_ok=True)
         run(['git', 'clone', ursus_repo_url, ursus_path], check=True)
 
+    pull(ursus_path)
     install_ursus(ursus_path)
 
     if (site_path / '.git').exists():
