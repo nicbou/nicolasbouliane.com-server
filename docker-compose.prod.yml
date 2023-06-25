@@ -13,14 +13,14 @@ services:
   ursus_builder:
     build:
       context: "./ursus_builder"
-    depends_on:
-      - search
     environment:
       - "GIT_REPO_URL"
       - "SITE_URL"
+      - "CLOUDFLARE_ZONE"
+      - "CLOUDFLARE_API_KEY"
     volumes:
       - "ursus_files:/var/ursus/site"
-      - "static_site:/var/ursus/output"
+      - "static_site:/var/ursus/final_output"
   proxy:
     volumes:
       - "static_site:/var/www/html"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Pulls the latest version of All About Berlin and rebuilds it as needed
+# Pulls the latest version of the website and rebuilds it as needed
 
 from pathlib import Path
 from subprocess import run, check_output, STDOUT
@@ -29,14 +29,27 @@ def purge_cloudflare_cache(cloudflare_zone: str, cloudflare_api_key: str):
     return request.urlopen(req)
 
 
-def build_site(site_path: Path, cloudflare_zone: str, cloudflare_api_key: str):
+def build_site(site_path: Path, tmp_output_path: Path, output_path: Path):
+    """
+    Build the website in a temporary location. If the build is successful, copy the files to the final location.
+    """
+    logger.info(f"Copying {output_path} to {tmp_output_path}")
+    run(
+        ['rsync', '-a', '--delete', str(output_path) + '/', tmp_output_path],
+        check=True, stdout=sys.stdout, stderr=STDOUT
+    )
+
     run(['ursus', '-c', site_path / 'ursus_config.py'], check=True, stdout=sys.stdout, stderr=STDOUT)
-    if cloudflare_zone and cloudflare_api_key:
-        purge_cloudflare_cache(cloudflare_zone, cloudflare_api_key)
+
+    logger.info(f"Copying {tmp_output_path} to {output_path}")
+    run(
+        ['rsync', '-a', '--delete', '--stats', str(tmp_output_path) + '/', output_path],
+        check=True, stdout=sys.stdout, stderr=STDOUT
+    )
 
 
 def install_ursus(ursus_path: Path):
-    logger.info('Installing ursus...')
+    logger.info("Installing ursus")
     run(['pip', 'install', '-e', ursus_path], check=True, stdout=sys.stdout, stderr=STDOUT)
 
 
@@ -47,6 +60,16 @@ def has_new_commits(repo_path: Path):
         ['git', '-C', repo_path, 'rev-list', f'{current_branch}...origin/{current_branch}', '--count'], encoding='UTF-8'
     ).strip())
     return int(new_commit_count) > 0
+
+
+def clone_or_pull(repo_url: str, repo_path: Path):
+    if (repo_path / '.git').exists():
+        logger.info(f"Repo already exists at {repo_path}. Pulling new changes")
+        pull(repo_path)
+    else:
+        logger.info(f"Cloning {repo_url} to {repo_path}")
+        repo_path.mkdir(parents=True, exist_ok=True)
+        run(['git', 'clone', repo_url, repo_path], check=True)
 
 
 def pull(repo_path: Path):
@@ -68,42 +91,41 @@ if __name__ == '__main__':
 
     ursus_path = Path('/usr/lib/ursus')
     site_path = Path('/var/ursus/site')
+    tmp_output_path = Path('/var/ursus/output')
+    output_path = Path('/var/ursus/final_output')
 
-    if (ursus_path / '.git').exists():
-        logger.info("Ursus repo already exists")
-    else:
-        logger.info("Cloning ursus repo...")
-        ursus_path.mkdir(parents=True, exist_ok=True)
-        run(['git', 'clone', ursus_repo_url, ursus_path], check=True)
-
-    pull(ursus_path)
+    clone_or_pull(ursus_repo_url, ursus_path)
     install_ursus(ursus_path)
 
-    if (site_path / '.git').exists():
-        logger.info("Site repo already exists...")
-    else:
-        logger.info("Cloning site repo...")
-        site_path.mkdir(parents=True, exist_ok=True)
-        run(['git', 'clone', site_repo_url, site_path], check=True)
+    clone_or_pull(site_repo_url, site_path)
 
-    pull(site_path)
-    build_site(site_path, cloudflare_zone, cloudflare_api_key)
+    rebuild_needed = True
 
     while True:
-        rebuild_needed = False
-        if has_new_commits(ursus_path):
-            logger.info("Ursus has changed. Pulling latest version...")
-            pull(ursus_path)
-            install_ursus(ursus_path)
-            rebuild_needed = True
+        try:
+            if has_new_commits(ursus_path):
+                logger.info("Ursus has changed. Pulling latest changes.")
+                pull(ursus_path)
+                install_ursus(ursus_path)
+                rebuild_needed = True
+        except:  # noqa
+            logger.exception("Failed to update ursus")
 
-        if has_new_commits(site_path):
-            logger.info("Site has changed. Pulling latest version...")
-            pull(site_path)
-            rebuild_needed = True
+        try:
+            if has_new_commits(site_path):
+                logger.info("Site has changed. Pulling latest version.")
+                pull(site_path)
+                rebuild_needed = True
+        except:  # noqa
+            logger.exception("Failed to get site changes")
 
         if rebuild_needed:
-            build_site(site_path, cloudflare_zone, cloudflare_api_key)
+            try:
+                build_site(site_path, tmp_output_path, output_path)
+                if cloudflare_zone and cloudflare_api_key:
+                    purge_cloudflare_cache(cloudflare_zone, cloudflare_api_key)
+            except:  # noqa
+                logger.exception("Failed to build site")
+        rebuild_needed = False
 
         sleep(60)
-
