@@ -50,7 +50,7 @@ def build_site(site_path: Path, tmp_output_path: Path, output_path: Path):
 
 def install_ursus(ursus_path: Path):
     logger.info("Installing ursus")
-    run(['pip', 'install', '-e', ursus_path], check=True, stdout=sys.stdout, stderr=STDOUT)
+    run(['pip', 'install', '-U', '-e', ursus_path], check=True, stdout=sys.stdout, stderr=STDOUT)
 
 
 def has_new_commits(repo_path: Path):
