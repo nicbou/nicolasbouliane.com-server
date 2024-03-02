@@ -1,12 +1,9 @@
-from datetime import datetime
 from hashlib import md5
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse, quote_plus, unquote
 import json
 import logging
-import os
 import re
-import requests
 
 
 logger = logging.getLogger(__name__)
@@ -76,7 +73,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         querystring = parse_qs(urlparse(self.path).query)
         query = querystring.get('q', [''])[0]
-        is_private = querystring.get('private', [''])[0] == '1'
+        is_private = querystring.get('private', [''])[0] == '1'  # Legacy mode that disabled logging in Incognito mode
         url = default.format(quote_plus(query))
 
         if not query:
@@ -112,37 +109,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
     def redirect(self, url, query, private=True):
-        if query and not private:
-            try:
-                access_token_response = requests.post('https://timeline.nicolasbouliane.com/api/oauth/token/', data={
-                    "client_id": os.environ['TIMELINE_CLIENT_ID'],
-                    "client_secret": os.environ['TIMELINE_CLIENT_SECRET'],
-                    "scope": "entry:write",
-                    "grant_type": "client_credentials",
-                }).json()
-                requests.post(
-                    'https://timeline.nicolasbouliane.com/api/timeline/entries/',
-                    json={
-                        "date_on_timeline": datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                        "source": "NicolasBouliane/search",
-                        "schema": "activity.browsing.search",
-                        "title": query,
-                        "description": "",
-                        "extra_attributes":{
-                            "url": url,
-                        }
-                    },
-                    headers={
-                        "Authorization": f"Bearer {access_token_response['access_token']}",
-                    },
-                    timeout=5,
-                )
-            except KeyError:
-                logger.exception(
-                    f"Could not post search query on timeline. Unexpected token response: {access_token_response}")
-            except:
-                logger.exception("Could not post search query on timeline")
-
         self.send_response(302)
         self.send_header('Location', url)
         self.end_headers()
