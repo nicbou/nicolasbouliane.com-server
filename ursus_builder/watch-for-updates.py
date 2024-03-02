@@ -83,7 +83,7 @@ if __name__ == '__main__':
         level=logging.INFO,
     )
 
-    ursus_repo_url = 'https://github.com/nicbou/ursus.git'
+    ursus_repo_url = 'https://github.com/all-about-berlin/ursus.git'
     site_repo_url = os.environ['GIT_REPO_URL']
 
     cloudflare_zone = os.environ.get('CLOUDFLARE_ZONE')
