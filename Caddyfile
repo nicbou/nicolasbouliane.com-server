@@ -17,6 +17,8 @@
     file_server
     try_files {path} {path}/index.html {path}.html
 
+    redir /search https://home.nicolasbouliane.com{uri}
+
     handle_errors {
         @404 {
             expression {http.error.status_code} == 404
