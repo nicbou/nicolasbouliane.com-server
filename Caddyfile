@@ -11,7 +11,7 @@
     @stripIndexHtmlExtension path_regexp strip (.*)/index$
     redir @stripIndexHtmlExtension {re.strip.1} 301
 
-    @stripTrailingSlash path_regexp strip (.*)/$
+    @stripTrailingSlash path_regexp strip (.+)/$
     redir @stripTrailingSlash {re.strip.1} 301
 
     file_server
