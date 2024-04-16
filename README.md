@@ -8,6 +8,10 @@ Create a file called `.env` with the right environment variables. Use `.env.exam
 
 Run `docker-compose up --build -d` in the project's root directory. It will serve the contents of `STATIC_SITE_PATH` (from your `.env` file) at `https://localhost`.
 
+Make sure that `SSL_EMAIL` and `SSL_DOMAIN` are *not* set.
+
 ### In production
 
 A production configuration is available. It includes the `ursus_builder` image, which rebuilds the website when there are new commits to the `nicolasbouliane.com` repo. Uncomment the `COMPOSE_FILE=...` line in your `.env` file to enable the production configuration.
+
+Make sure that `SSL_EMAIL` and `SSL_DOMAIN` are set.

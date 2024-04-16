@@ -1,21 +1,21 @@
 version: '3.2'
 
 services:
-  proxy:
-    build:
-      context: ./proxy
-      args:
-        - "SSL_DOMAIN"
-        - "SSL_EMAIL"
+  server:
+    image: caddy:2.7-alpine
+    environment:
+      - SSL_DOMAIN
+      - SSL_EMAIL
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      # STATIC_SITE_PATH is the path to your generated website.
-      - "${STATIC_SITE_PATH}:/var/www/html"
-      - "ssl_certs:/etc/ssl-certs"
-      - "acme_sh:/root/.acme.sh"
+      # STATIC_SITE_PATH is the path to your generated website, the output_path of Ursus
+      - "${STATIC_SITE_PATH}:/var/www/html:ro"
+      - "./Caddyfile:/etc/caddy/Caddyfile"
+      - "caddy_data:/data"
+      - "caddy_config:/config"
     restart: unless-stopped
 volumes:
-  acme_sh:
-  ssl_certs:
+  caddy_data:
+  caddy_config:

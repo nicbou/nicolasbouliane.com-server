@@ -15,7 +15,7 @@ services:
     volumes:
       - "ursus_files:/var/ursus/site"
       - "static_site:/var/ursus/final_output"
-  proxy:
+  server:
     volumes:
       - "static_site:/var/www/html"
 volumes:
