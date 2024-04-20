@@ -1,11 +1,8 @@
-FROM python:3.13-alpine
+FROM python:3.11-slim
 
-RUN apk update \
-    && apk add --no-cache \
-        git \
-        rsync \
-    && git config --global pull.rebase false \
-    && mkdir -p /var/ursus/output
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git rsync \
+    && rm -rf /var/lib/apt/lists/* \
 
 COPY ./watch-for-updates.py /watch-for-updates.py
 
